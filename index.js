@@ -4,10 +4,236 @@ const inquirer = require("inquirer")
 const db = mysql.createConnection(
     {
         host: 'localhost',
-        // MySQL username,
         user: 'root',
-        //TODO: Add MySQL password here
+        password: 'waffles',
         database: 'employees_db'
     },
     console.log('Successfuly connected to the employees_db database.')
 );
+
+async function queryRoles() {
+    return new Promise((resolve, reject) => {
+        db.query("select * from role", function (err, results) {
+            if (err) return reject(err);
+            resolve(results);
+        })
+    })
+}
+
+async function queryEmployees() {
+    return new Promise((resolve, reject) => {
+        db.query("select * from employee", function (err, results) {
+            if (err) return reject(err);
+            resolve(results);
+        })
+    })
+}
+
+
+function init() {
+    inquirer
+        .prompt({
+            name: "initialQuestion",
+            type: "list",
+            message: "What do you want to do?",
+            choices: [
+                "view all departments",
+                "view all roles",
+                "view all employees",
+                "add a department",
+                "add a role",
+                "add an employee",
+                "update an employee role",
+                "EXIT",
+            ],
+        })
+        .then((answers) => {
+            switch (answers.initialQuestion) {
+                case "view all departments":
+                    viewAllDepartments();
+                    break;
+                case "view all roles":
+                    viewAllRoles();
+                    break;
+                case "view all employees":
+                    viewAllEmployees();
+                    break;
+                case "add a department":
+                    addDepartment();
+                    break;
+                case "add a role":
+                    addRole();
+                    break;
+                case "add an employee":
+                    addEmployee();
+                    break;
+                case "update an employee role":
+                    updateEmployeeRole();
+                    break;
+                case "EXIT":
+                    db.end();
+                    break;
+                default:
+                    break;
+            }
+        });
+}
+
+function viewAllDepartments() {
+    db.query("select * from department", function (err, res) {
+        console.log("Here are all of the current departments:");
+        console.table(res);
+        init();
+    })
+}
+
+function viewAllRoles() {
+    db.query("select * from role", function (err, res) {
+        console.log("Here are all of the current roles:");
+        console.table(res);
+        init();
+    })
+}
+
+function viewAllEmployees() {
+    db.query("select * from employee", function (err, res) {
+        console.log("Here are all of the current employees:");
+        console.table(res);
+        init();
+    })
+}
+
+function addDepartment() {
+    inquirer.prompt({
+        type: "input",
+        name: "deptName",
+        message: "What department would you like to add?"
+    }).then((response) => {
+        console.log(response.deptName);
+        db.query("INSERT INTO department SET ?",
+            { deptName: response.deptName },
+            function (err) {
+                if (err) throw err;
+                init();
+            }
+        )
+    })
+}
+
+function addRole() {
+}
+
+async function addEmployee() {
+    const roles = await queryRoles()
+    const employees = await queryEmployees()
+    console.log(roles);
+    inquirer.prompt([
+        {
+            name: "firstName",
+            type: "input",
+            message: "Please enter your first name:"
+        },
+        {
+            name: "lastName",
+            type: "input",
+            message: "Please enter your last name:"
+        },
+        {
+            name: "roleId",
+            type: "list",
+            message: "What is your role at the company?",
+            choices: roles.map((role) => ({ name: role.title, value: role.id }))
+        },
+        {
+            name: "managerId",
+            type: "input",
+            message: "What is the your manager ID?"
+        }
+    ]).then((responses) => {
+        db.query(
+            "INSERT INTO employee SET ?",
+            {
+                first_name: responses.firstName,
+                last_name: responses.lastName,
+                role_id: responses.roleId,
+                manager_id: responses.managerId,
+            },
+            function (err) {
+                if (err) throw err;
+                init();
+            }
+        )
+    })
+}
+
+// function addEmployee() {
+//     db.query("select * from role", function (err, res) {
+//         inquirer.prompt([
+//             {
+//                 name: "firstName",
+//                 type: "input",
+//                 message: "Please enter your first name:"
+//             },
+//             {
+//                 name: "lastName",
+//                 type: "input",
+//                 message: "Please enter your last name:"
+//             },
+//             {
+//                 name: "roleId",
+//                 type: "list",
+//                 message: "What is your role at the company?",
+//                 choices: res.map((role) => ({ name: role.title, value: role.id }))
+//             },
+//             {
+//                 name: "managerId",
+//                 type: "input",
+//                 message: "What is the your manager ID?"
+//             }
+//         ]).then((responses) => {
+//             console.log(responses);
+//         })
+//     })
+// }
+
+async function updateEmployeeRole() {
+    // prompt user which employee to update
+    const employees = await queryEmployees();
+    const roles = await queryRoles();
+
+    inquirer.prompt([
+        {
+            name: "employeeToUpdate",
+            message: "Which employee's role will you be updating?",
+            type: "list",
+            choices: employees.map((employee) => ({ name: employee.first_name + " " + employee.last_name, value: employee.id }))
+        },
+        {
+            name: "roleId",
+            type: "list",
+            message: "What will be the new role for the selected employee?",
+            choices: roles.map((role) => ({ name: role.title, value: role.id }),)
+        }
+    ]).then((responses) => {
+        db.query(
+            "UPDATE employee SET ? WHERE ?",
+            [
+                {
+                    role_id: responses.roleId,
+                },
+                {
+                    id: responses.employeeToUpdate
+                }
+
+            ],
+            function (err) {
+                if (err) throw err;
+                init();
+            }
+        )
+    })
+    // ask user for updated role
+    // handle response and update user
+}
+
+init();
