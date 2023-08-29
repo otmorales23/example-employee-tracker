@@ -132,7 +132,7 @@ function addDepartment() {
 async function addRole() {
     const department = await queryDepartment()
 
-    inquirer.prompt(
+    inquirer.prompt([
         {
             type: "input",
             name: "title",
@@ -142,15 +142,14 @@ async function addRole() {
             type: "input",
             name: "salary",
             message: "What is the salary of the new role?"
-        }
-        // {
-        //     type: "list",
-        //     name: "department",
-        //     message: "Which department does this role fall under?",
-        //     choices: department.map((deptName) => ({ name: department.deptName, value: department.id }))
-        // },
-    ).then((response) => {
-        console.log(response.deptName);
+        },
+        {
+            type: "list",
+            name: "department",
+            message: "Which department does this role fall under?",
+            choices: department.map((deptName) => ({ name: deptName.deptName, value: deptName.id }))
+        },
+    ]).then((response) => {
         db.query("INSERT INTO role SET ?",
             {
                 title: response.title,
