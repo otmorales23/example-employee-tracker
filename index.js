@@ -38,6 +38,15 @@ async function queryDepartment() {
     })
 }
 
+async function queryManagers() {
+    return new Promise ((resolve, reject) => {
+        db.query("select * from manager", function (err, results) {
+            if (err) return reject(err);
+            resolve(results);
+        })
+    })
+}
+
 
 function init() {
     inquirer
@@ -51,6 +60,7 @@ function init() {
                 "view all employees",
                 "add a department",
                 "add a role",
+                "add a manager",
                 "add an employee",
                 "update an employee role",
                 "EXIT",
@@ -60,7 +70,7 @@ function init() {
             switch (answers.initialQuestion) {
                 case "view all departments":
                     viewAllDepartments();
-                    break;
+                    break;   
                 case "view all roles":
                     viewAllRoles();
                     break;
@@ -72,6 +82,9 @@ function init() {
                     break;
                 case "add a role":
                     addRole();
+                    break;
+                case "add a manager":
+                    addManager();
                     break;
                 case "add an employee":
                     addEmployee();
@@ -164,47 +177,44 @@ async function addRole() {
     })
 }
 
+async function addManager() {
+    const roles = await queryRoles()
 
-
-
-
-// async function addRole() {
-//     const deptName = await queryDeptName()
-//     inquirer.prompt(
-//         {
-//             type: "input",
-//             name: "salary",
-//             message: "What is the salary for this role?",
-//         },
-//         {
-//             type: "input",
-//             name: "title",
-//             message: "What is the title of the role you would like to add?"
-//         },
-//         {
-//             type: "list",
-//             name: "deptName",
-//             message: "What department will the added role fall under?",
-//             choices: deptName.map((department) => ({ name: department.deptName, value: department.id }))
-//         }).then((responses) => {
-//             // console.log(responses.deptName);
-//             db.query("INSERT INTO role SET ?",
-//                 { 
-//                     title: responses.title,
-//                     salary: responses.salary,
-//                     department_id: responses.deptName
-//                 },
-//                 function (err) {
-//                     if (err) throw err;
-//                     init();
-//                 }
-//             )
-//         })
-// }
-
+    inquirer.prompt([
+        {
+            name: "firstName",
+            type: "input",
+            message: "Please enter the manager's first name:"
+        },
+        {
+            name: "lastName",
+            type:"input",
+            message: "Please enter the manager's last name:"
+        },
+        {
+            name: "roleId",
+            type: "list",
+            message: "What is the employee's role at the company?",
+            choices: roles.map((role) => ({ name: role.title, value: role.id }))
+        },
+    ]).then((response) => {
+        db.query(
+            "INSERT INTO manager SET ?",
+            {
+                first_name: response.firstName,
+                last_name: response.lastName,
+                role_id: response.roleId,
+            },
+            function (err) {
+                if (err) throw err;
+                init();
+            }
+        )
+    })
+}
 async function addEmployee() {
     const roles = await queryRoles()
-    const employees = await queryEmployees()
+    const managers = await queryManagers()
     inquirer.prompt([
         {
             name: "firstName",
@@ -224,8 +234,9 @@ async function addEmployee() {
         },
         {
             name: "managerId",
-            type: "input",
-            message: "What is the the employee's manager ID?"
+            type: "list",
+            message: "What is the the employee's manager ID?",
+            choices: managers.map((manager) => ({ name: manager.first_name + " " + manager.last_name, value: manager.id}))
         }
     ]).then((responses) => {
         db.query(
@@ -246,7 +257,6 @@ async function addEmployee() {
 
 
 async function updateEmployeeRole() {
-    // prompt user which employee to update
     const employees = await queryEmployees();
     const roles = await queryRoles();
 
@@ -281,8 +291,6 @@ async function updateEmployeeRole() {
             }
         )
     })
-    // ask user for updated role
-    // handle response and update user
 }
 
 init();
