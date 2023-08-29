@@ -17,7 +17,7 @@
 
   ![Screenshot of console](images/console1.png)
   
-  ![Video of console](imagesconsole.webm)
+  ![Video of console](images/console.webm)
 
   ## Installation
   Click the link to view the GitHub repository, then clone the files into a local repository. After which you can run npm i to install the necessary packages, run your MySQL database, then using your terminal (as shown in the video) select the action you would like from the list and follow provided instructions. 
