@@ -23,7 +23,7 @@
   Click the link to view the GitHub repository, then clone the files into a local repository. After which you can run npm i to install the necessary packages, run your MySQL database, then using your terminal (as shown in the video) select the action you would like from the list and follow provided instructions. 
 
   ## Usage
-  Using the terminal (as shown in the video linked below) select the action you would like from the list and follow the provided instructions. 
+  Using the terminal select the action you would like from the list and follow the provided instructions. 
 
   ## Tests
   N/A
